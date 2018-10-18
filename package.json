@@ -1,0 +1,22 @@
+{
+  "name": "dappauth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc mocha test/*",
+    "prettier:watch": "onchange '**/*.js' -- prettier --write {{changed}}"
+  },
+  "author": "Pazams <maor@pazams.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ethereumjs-util": "^6.0.0",
+    "web3": "^1.0.0-beta.36"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
+    "onchange": "^5.0.2",
+    "prettier": "^1.14.3"
+  }
+}
