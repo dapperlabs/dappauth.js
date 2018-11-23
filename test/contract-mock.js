@@ -27,7 +27,7 @@ module.exports = class MockContract {
       case 'd202158d':
         return this._d202158d(`0x${methodParams.substring(0, 32 * 2)}`);
       default:
-        return nil, fmt.Errorf('Unexpected method %v', methodCall);
+        throw new Error(`Unexpected method ${methodCall}`);
     }
   }
 
