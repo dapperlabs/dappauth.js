@@ -6,9 +6,9 @@ const ProviderMock = require('./provider-mock');
 const ContractMock = require('./contract-mock');
 
 describe('dappauth', function() {
-  keyA = generateRandomKey();
-  keyB = generateRandomKey();
-  keyC = generateRandomKey();
+  const keyA = generateRandomKey();
+  const keyB = generateRandomKey();
+  const keyC = generateRandomKey();
 
   const testCases = [
     {

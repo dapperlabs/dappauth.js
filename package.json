@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha test/*",
-    "prettier:watch": "onchange '**/*.js' -- prettier --write {{changed}}"
+    "test": "npm run eslint && nyc mocha test/*",
+    "prettier:watch": "onchange '**/*.js' -- prettier --write {{changed}}",
+    "eslint": "eslint ./ --ext .js"
   },
   "author": "Pazams <maor@pazams.com>",
   "license": "MIT",
@@ -14,6 +15,10 @@
     "web3": "^1.0.0-beta.36"
   },
   "devDependencies": {
+    "babel-eslint": "^8.0.1",
+    "eslint": "^4.8.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "eslint-config-prettier": "^2.9.0",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "onchange": "^5.0.2",
