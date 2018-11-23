@@ -14,7 +14,7 @@ module.exports = class MockProvider {
       callback(null, {
         jsonrpc,
         id,
-        result
+        result,
       });
     } catch (error) {
       callback(error);

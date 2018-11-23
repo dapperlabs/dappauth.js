@@ -1,7 +1,7 @@
-const ethUtil = require("ethereumjs-util");
+const ethUtil = require('ethereumjs-util');
 
-const erc725CoreInterfaceID = "0xd202158d";
-const erc725InterfaceID = "0xdc3d2a7b";
+const erc725CoreInterfaceID = '0xd202158d';
+const erc725InterfaceID = '0xdc3d2a7b';
 
 module.exports = class MockContract {
   constructor(options) {
@@ -13,28 +13,28 @@ module.exports = class MockContract {
   }
 
   static _true() {
-    return "0x0000000000000000000000000000000000000000000000000000000000000001";
+    return '0x0000000000000000000000000000000000000000000000000000000000000001';
   }
 
   static _false(callback) {
-    return "0x0000000000000000000000000000000000000000000000000000000000000000";
+    return '0x0000000000000000000000000000000000000000000000000000000000000000';
   }
 
   run(methodCall, methodParams) {
     switch (methodCall) {
-      case "01ffc9a7":
+      case '01ffc9a7':
         return this._01ffc9a7(`0x${methodParams.substring(0, 4 * 2)}`);
-      case "d202158d":
+      case 'd202158d':
         return this._d202158d(`0x${methodParams.substring(0, 32 * 2)}`);
       default:
-        return nil, fmt.Errorf("Unexpected method %v", methodCall);
+        return nil, fmt.Errorf('Unexpected method %v', methodCall);
     }
   }
 
   // "isSupportedContract" method call
   _01ffc9a7(interfaceID) {
     if (this.errorOnIsSupportedContract) {
-      throw new Error("isSupportedContract call returned an error");
+      throw new Error('isSupportedContract call returned an error');
     }
 
     if (
@@ -54,7 +54,7 @@ module.exports = class MockContract {
   // "keyHasPurpose" method call
   _d202158d(key) {
     if (this.errorOnKeyHasPurpose) {
-      throw new Error("keyHasPurpose call returned an error");
+      throw new Error('keyHasPurpose call returned an error');
     }
 
     if (key === ethUtil.bufferToHex(ethUtil.keccak(this.actionableKey))) {

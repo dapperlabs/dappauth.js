@@ -1,10 +1,10 @@
-const Web3 = require("web3");
-const ethUtil = require("ethereumjs-util");
-const erc165 = require("./ABIs/ERC165");
-const erc725Core = require("./ABIs/ERC725Core");
+const Web3 = require('web3');
+const ethUtil = require('ethereumjs-util');
+const erc165 = require('./ABIs/ERC165');
+const erc725Core = require('./ABIs/ERC725Core');
 
-const erc725CoreInterfaceID = "0xd202158d";
-const erc725InterfaceID = "0xdc3d2a7b";
+const erc725CoreInterfaceID = '0xd202158d';
+const erc725InterfaceID = '0xdc3d2a7b';
 const erc725ActionPurpose = 2;
 
 module.exports = class DappAuth {
@@ -14,7 +14,7 @@ module.exports = class DappAuth {
 
   async isSignerActionableOnAddress(challenge, signature, address) {
     const challengeHash = ethUtil.hashPersonalMessage(
-      ethUtil.toBuffer(challenge)
+      ethUtil.toBuffer(challenge),
     );
 
     // Get the address of whoever signed this message
@@ -23,7 +23,7 @@ module.exports = class DappAuth {
       challengeHash,
       signatureParams.v,
       signatureParams.r,
-      signatureParams.s
+      signatureParams.s,
     );
     const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
@@ -43,7 +43,7 @@ module.exports = class DappAuth {
 
     const keyHasActionPurpose = await this.keyHasActionPurpose(
       address,
-      recoveredKey
+      recoveredKey,
     );
 
     return keyHasActionPurpose;
@@ -52,7 +52,7 @@ module.exports = class DappAuth {
   async keyHasActionPurpose(contractAddr, key) {
     const erc725CoreContract = new this.web3.eth.Contract(
       erc725Core,
-      contractAddr
+      contractAddr,
     );
     const keyHash = ethUtil.keccak(key);
 
