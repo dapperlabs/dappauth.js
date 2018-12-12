@@ -1,5 +1,5 @@
 {
-  "name": "dappauth",
+  "name": "@dapperlabs/dappauth",
   "version": "1.0.0",
   "description": "A util to prove actionable control ('ownership') over a public Ethereum address using eth_sign",
   "keywords": [
