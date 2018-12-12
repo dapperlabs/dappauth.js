@@ -6,7 +6,7 @@
     "ethereum",
     "ownership",
     "control",
-    "eth_sign",
+    "eth_sign"
   ],
   "main": "index.js",
   "scripts": {
