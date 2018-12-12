@@ -1,7 +1,13 @@
 {
   "name": "dappauth",
   "version": "1.0.0",
-  "description": "",
+  "description": "A util to prove actionable control ('ownership') over a public Ethereum address using eth_sign",
+  "keywords": [
+    "ethereum",
+    "ownership",
+    "control",
+    "eth_sign"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "npm run eslint && nyc mocha test/*",
