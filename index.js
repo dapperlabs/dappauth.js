@@ -3,9 +3,9 @@ const ethUtil = require('ethereumjs-util');
 const erc165 = require('./ABIs/ERC165');
 const erc725Core = require('./ABIs/ERC725Core');
 
-const erc725CoreInterfaceID = '0xd202158d';
-const erc725InterfaceID = '0xdc3d2a7b';
-const erc725ActionPurpose = 2;
+const ERC725_CORE_INTERFACE_ID = '0xd202158d';
+const ERC725_INTERFACE_ID = '0xdc3d2a7b';
+const ERC725_ACTION_PURPOSE = 2;
 
 module.exports = class DappAuth {
   constructor(web3Provider) {
@@ -18,13 +18,8 @@ module.exports = class DappAuth {
     );
 
     // Get the address of whoever signed this message
-    const signatureParams = ethUtil.fromRpcSig(signature);
-    const recoveredKey = ethUtil.ecrecover(
-      challengeHash,
-      signatureParams.v,
-      signatureParams.r,
-      signatureParams.s,
-    );
+    const { v, r, s } = ethUtil.fromRpcSig(signature);
+    const recoveredKey = ethUtil.ecrecover(challengeHash, v, r, s);
     const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
     // try direct-keyed wallet
@@ -36,20 +31,14 @@ module.exports = class DappAuth {
     }
 
     // try smart-contract wallet
-    const isSupportedContract = await this.isSupportedContract(address);
+    const isSupportedContract = await this._isSupportedContract(address);
     if (!isSupportedContract) {
       return false;
     }
-
-    const keyHasActionPurpose = await this.keyHasActionPurpose(
-      address,
-      recoveredKey,
-    );
-
-    return keyHasActionPurpose;
+    return this._keyHasActionPurpose(address, recoveredKey);
   }
 
-  async keyHasActionPurpose(contractAddr, key) {
+  async _keyHasActionPurpose(contractAddr, key) {
     const erc725CoreContract = new this.web3.eth.Contract(
       erc725Core,
       contractAddr,
@@ -57,15 +46,15 @@ module.exports = class DappAuth {
     const keyHash = ethUtil.keccak(key);
 
     return erc725CoreContract.methods
-      .keyHasPurpose(keyHash, erc725ActionPurpose)
+      .keyHasPurpose(keyHash, ERC725_ACTION_PURPOSE)
       .call();
   }
 
-  async isSupportedContract(contractAddr) {
+  async _isSupportedContract(contractAddr) {
     const erc165Contract = new this.web3.eth.Contract(erc165, contractAddr);
 
     const isSupportsERC725CoreInterface = await erc165Contract.methods
-      .supportsInterface(erc725CoreInterfaceID)
+      .supportsInterface(ERC725_CORE_INTERFACE_ID)
       .call();
 
     if (isSupportsERC725CoreInterface) {
@@ -73,7 +62,7 @@ module.exports = class DappAuth {
     }
 
     const isSupportsERC725Interface = await erc165Contract.methods
-      .supportsInterface(erc725InterfaceID)
+      .supportsInterface(ERC725_INTERFACE_ID)
       .call();
 
     if (isSupportsERC725Interface) {
