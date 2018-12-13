@@ -8,6 +8,7 @@
     "control",
     "eth_sign"
   ],
+  "repository": "github:dapperlabs/dappauth.js",
   "main": "index.js",
   "scripts": {
     "test": "npm run eslint && nyc mocha test/*",
