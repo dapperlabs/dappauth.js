@@ -5,7 +5,7 @@
 ## Usage
 ```js
   const Web3 = require('web3');
-  const DappAuth = require('dappauth');
+  const DappAuth = require('@dapperlabs/dappauth');
 
   const dappAuth = new DappAuth(new Web3.providers.HttpProvider('http://localhost:8545'));
 
