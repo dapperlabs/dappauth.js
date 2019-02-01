@@ -2,7 +2,7 @@ const Web3 = require('web3');
 const ethUtil = require('ethereumjs-util');
 const ERC1271 = require('./ABIs/ERC1271');
 
-const ERC1271_MAGIC_VALUE = '0x20c13b0b';
+const ERC1271_MAGIC_VALUE = '0x1626ba7e';
 
 module.exports = class DappAuth {
   constructor(web3Provider) {
@@ -31,7 +31,7 @@ module.exports = class DappAuth {
     const erc1271CoreContract = new this.web3.eth.Contract(ERC1271, address);
 
     const magicValue = await erc1271CoreContract.methods
-      .isValidSignature(challengeHash, signature)
+      .isValidSignature(ethUtil.keccak(challenge), signature) // we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
       .call();
 
     return magicValue === ERC1271_MAGIC_VALUE;
