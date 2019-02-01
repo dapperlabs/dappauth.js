@@ -2,7 +2,7 @@ const Web3 = require('web3');
 const ethUtil = require('ethereumjs-util');
 const ERC1271 = require('./ABIs/ERC1271');
 
-const ERC1271_MAGIC_VALUE = '0x20c13b0b';
+const ERC1271_MAGIC_VALUE = '0x1626ba7e';
 
 module.exports = class DappAuth {
   constructor(web3Provider) {

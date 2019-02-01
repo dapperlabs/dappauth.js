@@ -12,7 +12,7 @@ module.exports = class MockContract {
   }
 
   static _true() {
-    return '0x20c13b0b00000000000000000000000000000000000000000000000000000000';
+    return '0x1626ba7e00000000000000000000000000000000000000000000000000000000';
   }
 
   static _false(callback) {
@@ -21,17 +21,24 @@ module.exports = class MockContract {
 
   run(methodCall, methodParams) {
     switch (methodCall) {
-      case '20c13b0b':
-        const hash = `0x${methodParams.substring(96 * 2, 128 * 2)}`;
-        const signature = `0x${methodParams.substring(160 * 2, 225 * 2)}`;
-        return this._20c13b0b(hash, signature);
+      case '1626ba7e':
+        const hash = `0x${methodParams.substring(0, 32 * 2)}`;
+        const signatureLength = parseInt(
+          methodParams.substring(95 * 2, 96 * 2),
+          16,
+        );
+        const signature = `0x${methodParams.substring(
+          96 * 2,
+          (96 + signatureLength) * 2,
+        )}`;
+        return this._1626ba7e(hash, signature);
       default:
         throw new Error(`Unexpected method ${methodCall}`);
     }
   }
 
   // "isValidSignature" method call
-  _20c13b0b(hash, signature) {
+  _1626ba7e(hash, signature) {
     if (this.errorIsValidSignature) {
       throw new Error('isValidSignature call returned an error');
     }
