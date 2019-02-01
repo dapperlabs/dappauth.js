@@ -1,24 +1,27 @@
 const ethUtil = require('ethereumjs-util');
-const crypto = require('crypto');
+const Buffer = require('safe-buffer').Buffer;
 const assert = require('assert');
 const DappAuth = require('..');
 const ProviderMock = require('./provider-mock');
 const ContractMock = require('./contract-mock');
+const utils = require('./utils');
 
 describe('dappauth', function() {
-  const keyA = generateRandomKey();
-  const keyB = generateRandomKey();
-  const keyC = generateRandomKey();
+  const keyA = utils.generateRandomKey();
+  const keyB = utils.generateRandomKey();
+  const keyC = utils.generateRandomKey();
 
   const testCases = [
     {
       title: 'External wallets should be authorized signers over their address',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyA,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: null,
+        address: null,
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -28,12 +31,14 @@ describe('dappauth', function() {
     {
       title:
         'External wallets should NOT be authorized signers when signing the wrong challenge',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'bar',
       signingKey: keyA,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -42,12 +47,14 @@ describe('dappauth', function() {
     {
       title:
         'External wallets should NOT be authorized signers over OTHER addresses',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyA,
-      authAddr: keyToAddress(keyB),
+      authAddr: utils.keyToAddress(keyB),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyB),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -56,12 +63,14 @@ describe('dappauth', function() {
     {
       title:
         'Smart-contract wallets with a 1-of-1 correct internal key should be authorized signers over their address',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
+        address: utils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -70,12 +79,14 @@ describe('dappauth', function() {
     {
       title:
         'Smart-contract wallets with a 1-of-1 incorrect internal key should NOT be authorized signers over their address',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -83,12 +94,14 @@ describe('dappauth', function() {
     },
     {
       title: 'isAuthorizedSigner should error when smart-contract call errors',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
+        address: utils.keyToAddress(keyA),
         errorIsValidSignature: true,
       },
       expectedAuthorizedSignerError: true,
@@ -102,9 +115,14 @@ describe('dappauth', function() {
         new ProviderMock(new ContractMock(test.mockContract)),
       );
 
-      const signature = signPersonalMessage(
+      const signatureFunc = test.isEOA
+        ? utils.signEOAPersonalMessage
+        : utils.signERC1654PersonalMessage;
+
+      const signature = signatureFunc(
         test.challengeSign,
         test.signingKey,
+        test.authAddr,
       );
 
       let isError = false;
@@ -124,17 +142,3 @@ describe('dappauth', function() {
     }),
   );
 });
-
-function generateRandomKey() {
-  return ethUtil.toBuffer(`0x${crypto.randomBytes(32).toString('hex')}`);
-}
-
-function signPersonalMessage(message, key) {
-  const messageHash = ethUtil.hashPersonalMessage(ethUtil.toBuffer(message));
-  const signature = ethUtil.ecsign(messageHash, key);
-  return ethUtil.toRpcSig(signature.v, signature.r, signature.s);
-}
-
-function keyToAddress(key) {
-  return ethUtil.bufferToHex(ethUtil.privateToAddress(key));
-}
