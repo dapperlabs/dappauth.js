@@ -31,7 +31,7 @@ module.exports = class DappAuth {
     const erc1271CoreContract = new this.web3.eth.Contract(ERC1271, address);
 
     const magicValue = await erc1271CoreContract.methods
-      .isValidSignature(challengeHash, signature)
+      .isValidSignature(ethUtil.keccak(challenge), signature) // we send just a regular hash, which then the smart contract hashes ontop to an erc191
       .call();
 
     return magicValue === ERC1271_MAGIC_VALUE;
