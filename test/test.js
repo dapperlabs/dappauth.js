@@ -1,5 +1,4 @@
 const ethUtil = require('ethereumjs-util');
-const Buffer = require('safe-buffer').Buffer;
 const assert = require('assert');
 const DappAuth = require('..');
 const ProviderMock = require('./provider-mock');

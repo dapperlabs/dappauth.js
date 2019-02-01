@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const Buffer = require('safe-buffer').Buffer;
 const ethUtil = require('ethereumjs-util');
 
 // @param {Buffer/String} message
