@@ -1,8 +1,10 @@
 const ethUtil = require('ethereumjs-util');
+const ethAbi = require('ethereumjs-abi');
+const Buffer = require('safe-buffer').Buffer;
 const utils = require('./utils');
 
-const erc725CoreInterfaceID = '0xd202158d';
-const erc725InterfaceID = '0xdc3d2a7b';
+// bytes4(keccak256("isValidSignature(bytes32,bytes)")
+const ERC1271_METHOD_SIG = '1626ba7e';
 
 module.exports = class MockContract {
   constructor(options) {
@@ -12,25 +14,24 @@ module.exports = class MockContract {
   }
 
   static _true() {
-    return '0x1626ba7e00000000000000000000000000000000000000000000000000000000';
+    return `0x${ERC1271_METHOD_SIG}00000000000000000000000000000000000000000000000000000000`; // a.k.a the "magic value".
   }
 
   static _false(callback) {
     return '0x0000000000000000000000000000000000000000000000000000000000000000';
   }
 
+  // @param {String} methodCall
+  // @param {String} methodParams
+  // @return {String}
   run(methodCall, methodParams) {
     switch (methodCall) {
-      case '1626ba7e':
-        const hash = `0x${methodParams.substring(0, 32 * 2)}`;
-        const signatureLength = parseInt(
-          methodParams.substring(95 * 2, 96 * 2),
-          16,
+      case ERC1271_METHOD_SIG:
+        const [hash, signature] = ethAbi.rawDecode(
+          ['bytes32', 'bytes'],
+          Buffer.from(methodParams, 'hex'),
         );
-        const signature = `0x${methodParams.substring(
-          96 * 2,
-          (96 + signatureLength) * 2,
-        )}`;
+
         return this._1626ba7e(hash, signature);
       default:
         throw new Error(`Unexpected method ${methodCall}`);
@@ -38,6 +39,9 @@ module.exports = class MockContract {
   }
 
   // "isValidSignature" method call
+  // @param {Buffer} hash
+  // @param {Buffer} signature
+  // @return {String}
   _1626ba7e(hash, signature) {
     if (this.errorIsValidSignature) {
       throw new Error('isValidSignature call returned an error');
@@ -45,10 +49,7 @@ module.exports = class MockContract {
 
     // Get the address of whoever signed this message
     const { v, r, s } = ethUtil.fromRpcSig(signature);
-    const erc191MessageHash = utils.erc191MessageHash(
-      ethUtil.toBuffer(hash),
-      this.address,
-    );
+    const erc191MessageHash = utils.erc191MessageHash(hash, this.address);
     const recoveredKey = ethUtil.ecrecover(erc191MessageHash, v, r, s);
     const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
