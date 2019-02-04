@@ -1,63 +1,61 @@
 const ethUtil = require('ethereumjs-util');
+const ethAbi = require('ethereumjs-abi');
+const Buffer = require('safe-buffer').Buffer;
+const utils = require('./utils');
 
-const erc725CoreInterfaceID = '0xd202158d';
-const erc725InterfaceID = '0xdc3d2a7b';
+// bytes4(keccak256("isValidSignature(bytes32,bytes)")
+const ERC1271_METHOD_SIG = '1626ba7e';
 
 module.exports = class MockContract {
   constructor(options) {
-    this.isSupportsERC725CoreInterface = options.isSupportsERC725CoreInterface;
-    this.isSupportsERC725Interface = options.isSupportsERC725Interface;
-    this.actionableKey = options.actionableKey;
-    this.errorOnIsSupportedContract = options.errorOnIsSupportedContract;
-    this.errorOnKeyHasPurpose = options.errorOnKeyHasPurpose;
+    this.authorizedKey = options.authorizedKey;
+    this.address = options.address;
+    this.errorIsValidSignature = options.errorIsValidSignature;
   }
 
   static _true() {
-    return '0x0000000000000000000000000000000000000000000000000000000000000001';
+    return `0x${ERC1271_METHOD_SIG}00000000000000000000000000000000000000000000000000000000`; // a.k.a the "magic value".
   }
 
   static _false(callback) {
     return '0x0000000000000000000000000000000000000000000000000000000000000000';
   }
 
+  // @param {String} methodCall
+  // @param {String} methodParams
+  // @return {String}
   run(methodCall, methodParams) {
     switch (methodCall) {
-      case '01ffc9a7':
-        return this._01ffc9a7(`0x${methodParams.substring(0, 4 * 2)}`);
-      case 'd202158d':
-        return this._d202158d(`0x${methodParams.substring(0, 32 * 2)}`);
+      case ERC1271_METHOD_SIG:
+        const [hash, signature] = ethAbi.rawDecode(
+          ['bytes32', 'bytes'],
+          Buffer.from(methodParams, 'hex'),
+        );
+
+        return this._1626ba7e(hash, signature);
       default:
         throw new Error(`Unexpected method ${methodCall}`);
     }
   }
 
-  // "isSupportedContract" method call
-  _01ffc9a7(interfaceID) {
-    if (this.errorOnIsSupportedContract) {
-      throw new Error('isSupportedContract call returned an error');
+  // "isValidSignature" method call
+  // @param {Buffer} hash
+  // @param {Buffer} signature
+  // @return {String}
+  _1626ba7e(hash, signature) {
+    if (this.errorIsValidSignature) {
+      throw new Error('isValidSignature call returned an error');
     }
 
-    if (
-      this.isSupportsERC725CoreInterface &&
-      interfaceID === erc725CoreInterfaceID
-    ) {
-      return MockContract._true();
-    }
+    // Get the address of whoever signed this message
+    const { v, r, s } = ethUtil.fromRpcSig(signature);
+    const erc191MessageHash = utils.erc191MessageHash(hash, this.address);
+    const recoveredKey = ethUtil.ecrecover(erc191MessageHash, v, r, s);
+    const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
-    if (this.isSupportsERC725Interface && interfaceID === erc725InterfaceID) {
-      return MockContract._true();
-    }
+    const expectedAddress = ethUtil.publicToAddress(this.authorizedKey);
 
-    return MockContract._false();
-  }
-
-  // "keyHasPurpose" method call
-  _d202158d(key) {
-    if (this.errorOnKeyHasPurpose) {
-      throw new Error('keyHasPurpose call returned an error');
-    }
-
-    if (key === ethUtil.bufferToHex(ethUtil.keccak(this.actionableKey))) {
+    if (recoveredAddress.toString() === expectedAddress.toString()) {
       return MockContract._true();
     }
 

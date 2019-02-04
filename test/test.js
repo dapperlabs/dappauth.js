@@ -1,169 +1,110 @@
 const ethUtil = require('ethereumjs-util');
-const crypto = require('crypto');
 const assert = require('assert');
 const DappAuth = require('..');
 const ProviderMock = require('./provider-mock');
 const ContractMock = require('./contract-mock');
+const utils = require('./utils');
 
 describe('dappauth', function() {
-  const keyA = generateRandomKey();
-  const keyB = generateRandomKey();
-  const keyC = generateRandomKey();
+  const keyA = utils.generateRandomKey();
+  const keyB = utils.generateRandomKey();
+  const keyC = utils.generateRandomKey();
 
   const testCases = [
     {
-      title:
-        'Direct-keyed wallets should have actionable control over their address',
+      title: 'External wallets should be authorized signers over their address',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyA,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: false,
-        actionableKey: null,
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: null,
+        address: null,
+        errorIsValidSignature: false,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: true,
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: true,
     },
 
     {
       title:
-        'Direct-keyed wallets should NOT have actionable control when signing the wrong challenge',
+        'External wallets should NOT be authorized signers when signing the wrong challenge',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'bar',
       signingKey: keyA,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: false,
-        actionableKey: null,
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyA),
+        errorIsValidSignature: false,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: false,
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: false,
     },
     {
       title:
-        'Direct-keyed wallets should NOT have actionable control over OTHER addresses',
+        'External wallets should NOT be authorized signers over OTHER addresses',
+      isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyA,
-      authAddr: keyToAddress(keyB),
+      authAddr: utils.keyToAddress(keyB),
       mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: false,
-        actionableKey: null,
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyB),
+        errorIsValidSignature: false,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: false,
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: false,
     },
     {
       title:
-        'Smart-contract wallets with support for ERC725Core interface and action key should have actionable control over their address',
+        'Smart-contract wallets with a 1-of-1 correct internal key should be authorized signers over their address',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
-        isSupportsERC725CoreInterface: true,
-        isSupportsERC725Interface: false,
-        actionableKey: ethUtil.privateToPublic(keyB),
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: ethUtil.privateToPublic(keyB),
+        address: utils.keyToAddress(keyA),
+        errorIsValidSignature: false,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: true,
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: true,
     },
     {
       title:
-        'Smart-contract wallets with support for ERC725 interface and action key should have actionable control over their address',
+        'Smart-contract wallets with a 1-of-1 incorrect internal key should NOT be authorized signers over their address',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: true,
-        actionableKey: ethUtil.privateToPublic(keyB),
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: ethUtil.privateToPublic(keyC),
+        address: utils.keyToAddress(keyA),
+        errorIsValidSignature: false,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: true,
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: false,
     },
     {
-      title:
-        'Smart-contract wallets WITHOUT support for ERC725/ERC725Core interface and action key should NOT have actionable control over their address',
+      title: 'isAuthorizedSigner should error when smart-contract call errors',
+      isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
       signingKey: keyB,
-      authAddr: keyToAddress(keyA),
+      authAddr: utils.keyToAddress(keyA),
       mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: false,
-        actionableKey: ethUtil.privateToPublic(keyB),
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
+        authorizedKey: ethUtil.privateToPublic(keyB),
+        address: utils.keyToAddress(keyA),
+        errorIsValidSignature: true,
       },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: false,
-    },
-    {
-      title:
-        'Smart-contract wallets with support for ERC725 interface and incorrect action key should have NO actionable control over their address',
-      challenge: 'foo',
-      challengeSign: 'foo',
-      signingKey: keyB,
-      authAddr: keyToAddress(keyA),
-      mockContract: {
-        isSupportsERC725CoreInterface: false,
-        isSupportsERC725Interface: true,
-        actionableKey: ethUtil.privateToPublic(keyC),
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: false,
-      },
-      expectedIsSignerActionableOnAddressError: false,
-      expectedIsSignerActionableOnAddress: false,
-    },
-    {
-      title:
-        'isSignerActionableOnAddress should error when smart-contract call errors',
-      challenge: 'foo',
-      challengeSign: 'foo',
-      signingKey: keyB,
-      authAddr: keyToAddress(keyA),
-      mockContract: {
-        isSupportsERC725CoreInterface: true,
-        isSupportsERC725Interface: false,
-        actionableKey: ethUtil.privateToPublic(keyB),
-        errorOnIsSupportedContract: true,
-        errorOnKeyHasPurpose: false,
-      },
-      expectedIsSignerActionableOnAddressError: true,
-      expectedIsSignerActionableOnAddress: false,
-    },
-    {
-      title:
-        'isSignerActionableOnAddress should error when smart-contract call errors',
-      challenge: 'foo',
-      challengeSign: 'foo',
-      signingKey: keyB,
-      authAddr: keyToAddress(keyA),
-      mockContract: {
-        isSupportsERC725CoreInterface: true,
-        isSupportsERC725Interface: false,
-        actionableKey: ethUtil.privateToPublic(keyB),
-        errorOnIsSupportedContract: false,
-        errorOnKeyHasPurpose: true,
-      },
-      expectedIsSignerActionableOnAddressError: true,
-      expectedIsSignerActionableOnAddress: false,
+      expectedAuthorizedSignerError: true,
+      expectedAuthorizedSigner: false,
     },
   ];
 
@@ -173,15 +114,20 @@ describe('dappauth', function() {
         new ProviderMock(new ContractMock(test.mockContract)),
       );
 
-      const signature = signPersonalMessage(
+      const signatureFunc = test.isEOA
+        ? utils.signEOAPersonalMessage
+        : utils.signERC1654PersonalMessage;
+
+      const signature = signatureFunc(
         test.challengeSign,
         test.signingKey,
+        test.authAddr,
       );
 
       let isError = false;
-      let isSignerActionableOnAddress = false;
+      let isAuthorizedSigner = false;
       try {
-        isSignerActionableOnAddress = await dappAuth.isSignerActionableOnAddress(
+        isAuthorizedSigner = await dappAuth.isAuthorizedSigner(
           test.challenge,
           signature,
           test.authAddr,
@@ -190,28 +136,8 @@ describe('dappauth', function() {
         isError = true;
       }
 
-      assert.equal(isError, test.expectedIsSignerActionableOnAddressError);
-
-      if (!isError) {
-        assert.equal(
-          isSignerActionableOnAddress,
-          test.expectedIsSignerActionableOnAddress,
-        );
-      }
+      assert.equal(isError, test.expectedAuthorizedSignerError);
+      assert.equal(isAuthorizedSigner, test.expectedAuthorizedSigner);
     }),
   );
 });
-
-function generateRandomKey() {
-  return ethUtil.toBuffer(`0x${crypto.randomBytes(32).toString('hex')}`);
-}
-
-function signPersonalMessage(message, key) {
-  const messageHash = ethUtil.hashPersonalMessage(ethUtil.toBuffer(message));
-  const signature = ethUtil.ecsign(messageHash, key);
-  return ethUtil.toRpcSig(signature.v, signature.r, signature.s);
-}
-
-function keyToAddress(key) {
-  return ethUtil.bufferToHex(ethUtil.privateToAddress(key));
-}

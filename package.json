@@ -20,7 +20,9 @@
   "license": "MIT",
   "dependencies": {
     "ethereumjs-util": "^6.0.0",
-    "web3": "^1.0.0-beta.36"
+    "web3": "^1.0.0-beta.36",
+    "ethereumjs-abi": "^0.6.6",
+    "safe-buffer": "^5.1.2"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.1",
