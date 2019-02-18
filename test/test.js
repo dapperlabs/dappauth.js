@@ -16,7 +16,7 @@ describe('dappauth', function() {
       isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
-      signingKey: keyA,
+      signingKeys: [keyA],
       authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: null,
@@ -33,7 +33,7 @@ describe('dappauth', function() {
       isEOA: true,
       challenge: 'foo',
       challengeSign: 'bar',
-      signingKey: keyA,
+      signingKeys: [keyA],
       authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
@@ -49,7 +49,7 @@ describe('dappauth', function() {
       isEOA: true,
       challenge: 'foo',
       challengeSign: 'foo',
-      signingKey: keyA,
+      signingKeys: [keyA],
       authAddr: utils.keyToAddress(keyB),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
@@ -65,7 +65,7 @@ describe('dappauth', function() {
       isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
-      signingKey: keyB,
+      signingKeys: [keyB],
       authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
@@ -77,11 +77,28 @@ describe('dappauth', function() {
     },
     {
       title:
+        'Smart-contract wallets with a 1-of-2 (multi-sig) correct internal key should be authorized signers over their address',
+      isEOA: false,
+      challenge: 'foo',
+      challengeSign: 'foo',
+      signingKeys: [keyB, keyC],
+      authAddr: utils.keyToAddress(keyA),
+      mockContract: {
+        authorizedKey: ethUtil.privateToPublic(keyB),
+        address: utils.keyToAddress(keyA),
+        errorIsValidSignature: false,
+      },
+      expectedAuthorizedSignerError: false,
+      expectedAuthorizedSigner: true,
+    },
+
+    {
+      title:
         'Smart-contract wallets with a 1-of-1 incorrect internal key should NOT be authorized signers over their address',
       isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
-      signingKey: keyB,
+      signingKeys: [keyB],
       authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
@@ -96,7 +113,7 @@ describe('dappauth', function() {
       isEOA: false,
       challenge: 'foo',
       challengeSign: 'foo',
-      signingKey: keyB,
+      signingKeys: [keyB],
       authAddr: utils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
@@ -118,18 +135,20 @@ describe('dappauth', function() {
         ? utils.signEOAPersonalMessage
         : utils.signERC1654PersonalMessage;
 
-      const signature = signatureFunc(
-        test.challengeSign,
-        test.signingKey,
-        test.authAddr,
-      );
+      const signatures = `0x${test.signingKeys
+        .map((signingKey) =>
+          ethUtil.stripHexPrefix(
+            signatureFunc(test.challengeSign, signingKey, test.authAddr),
+          ),
+        )
+        .join('')}`;
 
       let isError = false;
       let isAuthorizedSigner = false;
       try {
         isAuthorizedSigner = await dappAuth.isAuthorizedSigner(
           test.challenge,
-          signature,
+          signatures,
           test.authAddr,
         );
       } catch (error) {

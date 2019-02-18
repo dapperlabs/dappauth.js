@@ -46,9 +46,14 @@ module.exports = class MockContract {
     if (this.errorIsValidSignature) {
       throw new Error('isValidSignature call returned an error');
     }
+    // split to 65 bytes (130 hex) chunks
+    const multi_sigs = signature.toString('hex').match(/.{1,130}/g);
+
+    // TODO: is it first or last?
+    const expected_authrorised_sig = multi_sigs[0];
 
     // Get the address of whoever signed this message
-    const { v, r, s } = ethUtil.fromRpcSig(signature);
+    const { v, r, s } = ethUtil.fromRpcSig(`0x${expected_authrorised_sig}`);
     const erc191MessageHash = utils.erc191MessageHash(hash, this.address);
     const recoveredKey = ethUtil.ecrecover(erc191MessageHash, v, r, s);
     const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
