@@ -159,4 +159,34 @@ describe('dappauth', function() {
       assert.equal(isAuthorizedSigner, test.expectedAuthorizedSigner);
     }),
   );
+
+  // This test is needed for 100% coverage
+  it('Invalid signature should fail', async function() {
+    const dappAuth = new DappAuth(
+      new ProviderMock(
+        new ContractMock({
+          authorizedKey: null,
+          address: null,
+          errorIsValidSignature: false,
+        }),
+      ),
+    );
+
+    const signatures = '0xinvalid-signature';
+
+    let isError = false;
+    let isAuthorizedSigner = false;
+    try {
+      isAuthorizedSigner = await dappAuth.isAuthorizedSigner(
+        'foo',
+        signatures,
+        utils.keyToAddress(keyA),
+      );
+    } catch (error) {
+      isError = true;
+    }
+
+    assert.equal(isError, true);
+    assert.equal(isAuthorizedSigner, false);
+  });
 });
