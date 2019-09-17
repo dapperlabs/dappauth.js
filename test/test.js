@@ -160,6 +160,45 @@ describe('dappauth', function() {
     }),
   );
 
+  it('It should decode challenge as utf8 by default when computing EOA personal messages hash', async function() {
+    const dappAuth = new DappAuth(
+      new ProviderMock(
+        new ContractMock({
+          authorizedKey: null,
+          address: null,
+          errorIsValidSignature: false,
+        }),
+      ),
+    );
+
+    const eoaHash = dappAuth._hashEOAPersonalMessage('foo');
+    assert.equal(
+      `0x${eoaHash.toString('hex')}`,
+      '0x76b2e96714d3b5e6eb1d1c509265430b907b44f72b2a22b06fcd4d96372b8565',
+    );
+  });
+
+  // See https://github.com/MetaMask/eth-sig-util/issues/60
+  it('It should decode challenge as hex if hex is detected when computing EOA personal messages hash', async function() {
+    const dappAuth = new DappAuth(
+      new ProviderMock(
+        new ContractMock({
+          authorizedKey: null,
+          address: null,
+          errorIsValidSignature: false,
+        }),
+      ),
+    );
+
+    // result if 0xffff is decoded as hex:  13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47
+    // result if 0xffff is decoded as utf8: 247aefb5d2e5b17fca61f786c779f7388485460c13e51308f88b2ff84ffa6851
+    const eoaHash = dappAuth._hashEOAPersonalMessage('0xffff');
+    assert.equal(
+      `0x${eoaHash.toString('hex')}`,
+      '0x13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47',
+    );
+  });
+
   // This test is needed for 100% coverage
   it('Invalid signature should fail', async function() {
     const dappAuth = new DappAuth(
