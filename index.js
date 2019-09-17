@@ -11,10 +11,7 @@ module.exports = class DappAuth {
   }
 
   async isAuthorizedSigner(challenge, signature, address) {
-    const challengeHash = ethUtil.hashPersonalMessage(
-      ethUtil.toBuffer(challenge),
-    );
-
+    const eoaChallengeHash = this._hashEOAPersonalMessage(challenge);
     let isAuthorizedDirectKey;
     let errEOA;
 
@@ -22,7 +19,7 @@ module.exports = class DappAuth {
     try {
       // Get the address of whoever signed this message
       const { v, r, s } = ethUtil.fromRpcSig(signature);
-      const recoveredKey = ethUtil.ecrecover(challengeHash, v, r, s);
+      const recoveredKey = ethUtil.ecrecover(eoaChallengeHash, v, r, s);
       const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
       if (
@@ -48,6 +45,10 @@ module.exports = class DappAuth {
     } catch (err) {
       throw mergeErrors(errEOA, err);
     }
+  }
+
+  _hashEOAPersonalMessage(challenge) {
+    return ethUtil.hashPersonalMessage(ethUtil.toBuffer(challenge));
   }
 };
 
