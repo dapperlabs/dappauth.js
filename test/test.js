@@ -6,10 +6,10 @@ const ProviderMock = require('./provider-mock.js');
 const ContractMock = require('./contract-mock.js');
 const testUtils = require('./test-utils.js');
 
-describe('dappauth', function() {
-  const keyA = utils.generateRandomKey();
-  const keyB = utils.generateRandomKey();
-  const keyC = utils.generateRandomKey();
+describe('DappAuth', function() {
+  const keyA = testUtils.generateRandomKey();
+  const keyB = testUtils.generateRandomKey();
+  const keyC = testUtils.generateRandomKey();
 
   const testCases = [
     {
@@ -18,7 +18,7 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: null,
         address: null,
@@ -35,10 +35,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'bar',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -51,10 +51,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyB),
+      authAddr: testUtils.keyToAddress(keyB),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyB),
+        address: testUtils.keyToAddress(keyB),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -67,10 +67,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -83,10 +83,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB, keyC],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -100,10 +100,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -115,10 +115,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: true,
       },
       expectedAuthorizedSignerError: true,
@@ -133,8 +133,8 @@ describe('dappauth', function() {
       );
 
       const signatureFunc = test.isEOA
-        ? utils.signEOAPersonalMessage
-        : utils.signERC1654PersonalMessage;
+        ? testUtils.signEOAPersonalMessage
+        : testUtils.signERC1654PersonalMessage;
 
       const signatures = `0x${test.signingKeys
         .map((signingKey) =>
@@ -234,7 +234,7 @@ describe('dappauth', function() {
       isAuthorizedSigner = await dappAuth.isAuthorizedSigner(
         'foo',
         signatures,
-        utils.keyToAddress(keyA),
+        testUtils.keyToAddress(keyA),
       );
     } catch (error) {
       isError = true;
