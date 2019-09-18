@@ -51,7 +51,7 @@ module.exports = class DappAuth {
     return ethUtil.hashPersonalMessage(this._decodeChallenge(challenge));
   }
 
-  // This is a hash just over the challenge. The smart contract takes this result and hashes ontop to an erc191 hash.
+  // This is a hash just over the challenge. The smart contract takes this result and hashes on top to an erc191 hash.
   _hashSCMessage(challenge) {
     return ethUtil.keccak(this._decodeChallenge(challenge));
   }
