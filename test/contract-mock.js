@@ -1,7 +1,7 @@
 const ethUtil = require('ethereumjs-util');
 const ethAbi = require('ethereumjs-abi');
 const Buffer = require('safe-buffer').Buffer;
-const utils = require('./utils');
+const testUtils = require('./test-utils.js');
 
 // bytes4(keccak256("isValidSignature(bytes32,bytes)")
 const ERC1271_METHOD_SIG = '1626ba7e';
@@ -54,7 +54,7 @@ module.exports = class MockContract {
 
     // Get the address of whoever signed this message
     const { v, r, s } = ethUtil.fromRpcSig(`0x${expected_authrorised_sig}`);
-    const erc191MessageHash = utils.erc191MessageHash(hash, this.address);
+    const erc191MessageHash = testUtils.erc191MessageHash(hash, this.address);
     const recoveredKey = ethUtil.ecrecover(erc191MessageHash, v, r, s);
     const recoveredAddress = ethUtil.publicToAddress(recoveredKey);
 
