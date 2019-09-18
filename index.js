@@ -58,9 +58,23 @@ module.exports = class DappAuth {
 
   // See https://github.com/MetaMask/eth-sig-util/issues/60
   _decodeChallenge(challenge) {
-    return ethUtil.toBuffer(challenge);
+    return isHexString(challenge)
+      ? Buffer.from(removeHexPrefix(challenge), 'hex')
+      : Buffer.from(challenge);
   }
 };
+
+function isHexString(value) {
+  return (
+    typeof value === 'string' &&
+    value.length % 2 === 0 &&
+    value.match(/^0x[0-9A-Fa-f]*$/)
+  );
+}
+
+function removeHexPrefix(value) {
+  return value.slice(0, 2) === '0x' ? value.slice(2) : value;
+}
 
 function mergeErrors(errEOA, errCA) {
   const msgEOA = errEOA
