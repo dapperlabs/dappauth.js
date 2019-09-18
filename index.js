@@ -38,7 +38,7 @@ module.exports = class DappAuth {
       const erc1271CoreContract = new this.web3.eth.Contract(ERC1271, address);
 
       const magicValue = await erc1271CoreContract.methods
-        .isValidSignature(ethUtil.keccak(challenge), signature) // we send just a regular hash, which then the smart contract hashes ontop to an erc191 hash
+        .isValidSignature(this._hashSCMessage(challenge), signature)
         .call();
 
       return magicValue === ERC1271_MAGIC_VALUE;
@@ -48,7 +48,17 @@ module.exports = class DappAuth {
   }
 
   _hashEOAPersonalMessage(challenge) {
-    return ethUtil.hashPersonalMessage(ethUtil.toBuffer(challenge));
+    return ethUtil.hashPersonalMessage(this._decodeChallenge(challenge));
+  }
+
+  // This is a hash just over the challenge. The smart contract takes this result and hashes ontop to an erc191 hash.
+  _hashSCMessage(challenge) {
+    return ethUtil.keccak(this._decodeChallenge(challenge));
+  }
+
+  // See https://github.com/MetaMask/eth-sig-util/issues/60
+  _decodeChallenge(challenge) {
+    return ethUtil.toBuffer(challenge);
   }
 };
 
