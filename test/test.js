@@ -1,9 +1,10 @@
 const ethUtil = require('ethereumjs-util');
 const assert = require('assert');
-const DappAuth = require('..');
-const ProviderMock = require('./provider-mock');
-const ContractMock = require('./contract-mock');
-const utils = require('./utils');
+const DappAuth = require('../index.js');
+const utils = require('../utils.js');
+const ProviderMock = require('./provider-mock.js');
+const ContractMock = require('./contract-mock.js');
+const testUtils = require('./test-utils.js');
 
 describe('dappauth', function() {
   const keyA = utils.generateRandomKey();
