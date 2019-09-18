@@ -44,7 +44,7 @@ module.exports = class DappAuth {
 
       return magicValue === ERC1271_MAGIC_VALUE;
     } catch (err) {
-      throw mergeErrors(errEOA, err);
+      throw utils.mergeErrors(errEOA, err);
     }
   }
 
@@ -59,27 +59,8 @@ module.exports = class DappAuth {
 
   // See https://github.com/MetaMask/eth-sig-util/issues/60
   _decodeChallenge(challenge) {
-    return isHexString(challenge)
-      ? Buffer.from(removeHexPrefix(challenge), 'hex')
+    return utils.isHexString(challenge)
+      ? Buffer.from(utils.removeHexPrefix(challenge), 'hex')
       : Buffer.from(challenge);
   }
 };
-
-function isHexString(value) {
-  return (
-    typeof value === 'string' &&
-    value.length % 2 === 0 &&
-    value.match(/^0x[0-9A-Fa-f]*$/)
-  );
-}
-
-function removeHexPrefix(value) {
-  return value.slice(0, 2) === '0x' ? value.slice(2) : value;
-}
-
-function mergeErrors(errEOA, errCA) {
-  const msgEOA = errEOA
-    ? `errored with: ${errEOA.toString()}`
-    : 'returned false';
-  return `Authorisation check failed and errored in 2 alternative flows. 'External Owned Account' check ${msgEOA} . 'Contract Account' check errored with: ${errCA.toString()}`;
-}
