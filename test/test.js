@@ -1,14 +1,15 @@
 const ethUtil = require('ethereumjs-util');
 const assert = require('assert');
-const DappAuth = require('..');
-const ProviderMock = require('./provider-mock');
-const ContractMock = require('./contract-mock');
-const utils = require('./utils');
+const DappAuth = require('../index.js');
+const utils = require('../utils.js');
+const ProviderMock = require('./provider-mock.js');
+const ContractMock = require('./contract-mock.js');
+const testUtils = require('./test-utils.js');
 
-describe('dappauth', function() {
-  const keyA = utils.generateRandomKey();
-  const keyB = utils.generateRandomKey();
-  const keyC = utils.generateRandomKey();
+describe('DappAuth', function() {
+  const keyA = testUtils.generateRandomKey();
+  const keyB = testUtils.generateRandomKey();
+  const keyC = testUtils.generateRandomKey();
 
   const testCases = [
     {
@@ -17,7 +18,7 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: null,
         address: null,
@@ -34,10 +35,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'bar',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -50,10 +51,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyA],
-      authAddr: utils.keyToAddress(keyB),
+      authAddr: testUtils.keyToAddress(keyB),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyB),
+        address: testUtils.keyToAddress(keyB),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -66,10 +67,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -82,10 +83,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB, keyC],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -99,10 +100,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyC),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: false,
       },
       expectedAuthorizedSignerError: false,
@@ -114,10 +115,10 @@ describe('dappauth', function() {
       challenge: 'foo',
       challengeSign: 'foo',
       signingKeys: [keyB],
-      authAddr: utils.keyToAddress(keyA),
+      authAddr: testUtils.keyToAddress(keyA),
       mockContract: {
         authorizedKey: ethUtil.privateToPublic(keyB),
-        address: utils.keyToAddress(keyA),
+        address: testUtils.keyToAddress(keyA),
         errorIsValidSignature: true,
       },
       expectedAuthorizedSignerError: true,
@@ -132,8 +133,8 @@ describe('dappauth', function() {
       );
 
       const signatureFunc = test.isEOA
-        ? utils.signEOAPersonalMessage
-        : utils.signERC1654PersonalMessage;
+        ? testUtils.signEOAPersonalMessage
+        : testUtils.signERC1654PersonalMessage;
 
       const signatures = `0x${test.signingKeys
         .map((signingKey) =>
@@ -160,7 +161,7 @@ describe('dappauth', function() {
     }),
   );
 
-  it('It should decode challenge as utf8 by default when computing EOA personal messages hash', async function() {
+  it('It should decode challenge as utf8 by default when decoding challenges', async function() {
     const dappAuth = new DappAuth(
       new ProviderMock(
         new ContractMock({
@@ -176,10 +177,16 @@ describe('dappauth', function() {
       `0x${eoaHash.toString('hex')}`,
       '0x76b2e96714d3b5e6eb1d1c509265430b907b44f72b2a22b06fcd4d96372b8565',
     );
+
+    const scHash = dappAuth._hashSCMessage('foo');
+    assert.equal(
+      `0x${scHash.toString('hex')}`,
+      '0x41b1a0649752af1b28b3dc29a1556eee781e4a4c3a1f7f53f90fa834de098c4d',
+    );
   });
 
   // See https://github.com/MetaMask/eth-sig-util/issues/60
-  it('It should decode challenge as hex if hex is detected when computing EOA personal messages hash', async function() {
+  it('It should decode challenge as hex if hex is detected when decoding challenges', async function() {
     const dappAuth = new DappAuth(
       new ProviderMock(
         new ContractMock({
@@ -196,6 +203,14 @@ describe('dappauth', function() {
     assert.equal(
       `0x${eoaHash.toString('hex')}`,
       '0x13a6aa3102b2d639f36804a2d7c31469618fd7a7907c658a7b2aa91a06e31e47',
+    );
+
+    // result if 0xffff is decoded as hex:  06d41322d79dfed27126569cb9a80eb0967335bf2f3316359d2a93c779fcd38a
+    // result if 0xffff is decoded as utf8: f0443ea82539c5136844b0a175f544b7ee7bc0fc5ce940bad19f08eaf618af71
+    const scHash = dappAuth._hashSCMessage('0xffff');
+    assert.equal(
+      `0x${scHash.toString('hex')}`,
+      '0x06d41322d79dfed27126569cb9a80eb0967335bf2f3316359d2a93c779fcd38a',
     );
   });
 
@@ -219,7 +234,7 @@ describe('dappauth', function() {
       isAuthorizedSigner = await dappAuth.isAuthorizedSigner(
         'foo',
         signatures,
-        utils.keyToAddress(keyA),
+        testUtils.keyToAddress(keyA),
       );
     } catch (error) {
       isError = true;
@@ -227,5 +242,12 @@ describe('dappauth', function() {
 
     assert.equal(isError, true);
     assert.equal(isAuthorizedSigner, false);
+  });
+});
+
+describe('utils', function() {
+  it('Should remove hex prefix if value is hex prefixed', function() {
+    const value = 'foo';
+    assert.equal(utils.removeHexPrefix(value), 'foo');
   });
 });
