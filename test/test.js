@@ -244,3 +244,10 @@ describe('DappAuth', function() {
     assert.equal(isAuthorizedSigner, false);
   });
 });
+
+describe('utils', function() {
+  it('Should remove hex prefix if value is hex prefixed', function() {
+    const value = 'foo';
+    assert.equal(utils.removeHexPrefix(value), 'foo');
+  });
+});
