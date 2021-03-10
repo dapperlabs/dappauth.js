@@ -8,6 +8,9 @@
   const DappAuth = require('@dapperlabs/dappauth');
 
   const dappAuth = new DappAuth(new Web3.providers.HttpProvider('http://localhost:8545'));
+  
+  //To use a node provider, like Alchemy (www.alchemyapi.io), do the following:
+  //const dappAuth = new DappAuth(new Web3("https://eth-mainnet.alchemyapi.io/v2/your-api-key"));
 
   async function debug() {
     const challenge = 'foo';
